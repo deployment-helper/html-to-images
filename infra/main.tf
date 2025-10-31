@@ -13,4 +13,6 @@ resource "github_repository" "html_to_images" {
   auto_init = false
 
   license_template = "mit"
+
+  vulnerability_alerts = false
 }
