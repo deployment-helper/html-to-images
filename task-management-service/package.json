@@ -1,0 +1,18 @@
+{
+  "name": "task-management-service",
+  "scripts": {
+    "dev": "bun run src/index.ts --watch",
+    "serve": "bun run src/index.ts",
+    "build": "bun build src/index.ts --outdir dist --target bun --minify"
+  },
+  "dependencies": {
+    "@google-cloud/pubsub": "^5.2.0",
+    "@hono/zod-validator": "^0.7.4",
+    "dotenv": "^17.2.3",
+    "hono": "^4.10.4",
+    "zod": "^4.1.12"
+  },
+  "devDependencies": {
+    "@types/bun": "latest"
+  }
+}
