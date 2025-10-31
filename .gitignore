@@ -1,0 +1,111 @@
+# Terraform# Terraform
+
+*.tfstate*.tfstate
+
+*.tfstate.**.tfstate.*
+
+*.tfvars*.tfvars
+
+!terraform.tfvars.example!terraform.tfvars.example
+
+.terraform/.terraform/
+
+.terraformrc.terraformrc
+
+terraform.rcterraform.rc
+
+crash.logcrash.log
+
+crash.*.logcrash.*.log
+
+override.tfoverride.tf
+
+override.tf.jsonoverride.tf.json
+
+*_override.tf*_override.tf
+
+*_override.tf.json*_override.tf.json
+
+.terragrunt-cache/.terragrunt-cache/
+
+
+
+# Node.js & npm# Node.js
+
+node_modules/node_modules/
+
+npm-debug.log*npm-debug.log*
+
+yarn-debug.log*yarn-debug.log*
+
+yarn-error.log*yarn-error.log*
+
+lerna-debug.log*lerna-debug.log*
+
+.pnpm-debug.log*.pnpm-debug.log*
+
+dist/dist/
+
+build/build/
+
+
+
+# Bun# Bun
+
+bun.lockbbun.lockb
+
+*.bun*.bun
+
+
+
+# IDE# IDE
+
+.vscode/.vscode/
+
+.idea/.idea/
+
+*.swp*.swp
+
+*.swo*.swo
+
+*.sublime-project
+
+*.sublime-workspace# OS
+
+.DS_Store
+
+# OSThumbs.db
+
+.DS_Store
+
+Thumbs.db# Logs
+
+*.log
+
+# Environment variables
+
+.env# Environment variables
+
+.env.local.env
+
+.env.*.local.env.local
+
+.env.*.local
+# IDE-specific files
+.editorconfig
+.eslintignore
+
+# Logs
+*.log
+logs/
+
+# GCP
+.gcloud/
+google-cloud-sdk/
+credentials.json
+service-account-key.json
+
+# Misc
+.cache/
+.tmp/
+tmp/
