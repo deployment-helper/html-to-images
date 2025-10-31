@@ -28,6 +28,8 @@ override.tf.jsonoverride.tf.json
 
 .terragrunt-cache/.terragrunt-cache/
 
+infra/.terraform.lock.hcl
+infra/.terraform/
 
 
 # Node.js & npm# Node.js
@@ -109,3 +111,5 @@ service-account-key.json
 .cache/
 .tmp/
 tmp/
+
+**/**/.env
