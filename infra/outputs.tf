@@ -21,10 +21,6 @@ output "github_repository_full_name" {
   value       = github_repository.html_to_images.full_name
 }
 
-output "github_repository_clone_url" {
-  description = "Clone URL for the GitHub repository"
-  value       = github_repository.html_to_images.clone_url
-}
 
 # General outputs
 output "environment" {
