@@ -11,6 +11,7 @@ import traceback
 from sqlmodel import select
 from app.db.db import get_session
 from app.models.task import Task
+from app.services.pubsub import PubSub, get_pubsub
 
 # Load environment variables from .env file
 load_dotenv()
@@ -133,13 +134,20 @@ def health():
     return "ok"
 
 
-@app.post("/api/tasks", dependencies=[Depends(verify_api_key)])
+@app.post(
+    "/api/tasks",
+    dependencies=[Depends(verify_api_key)],
+)
 async def post_task(
-    task_req: TaskReq, session: AsyncSession = Depends(get_session)
+    task_req: TaskReq,
+    session: AsyncSession = Depends(get_session),
+    pubsub_client: PubSub = Depends(get_pubsub),
 ) -> Task:
     task = Task(input={"heading": task_req.heading})
     session.add(task)
     await session.commit()
+    result = await pubsub_client.publish_msg(task.model_dump_json())
+    logger.info(f"message-id {result}")
     return task
 
 

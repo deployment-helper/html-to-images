@@ -14,4 +14,6 @@ dependencies = [
     "greenlet>=3.2.4",
     "psycopg[binary]>=3.2.12",
     "psycopg2-binary>=2.9.11",
+    "google-cloud-pubsub>=2.33.0",
+    "pydantic-settings>=2.11.0",
 ]
