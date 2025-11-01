@@ -4,17 +4,14 @@ from fastapi.responses import JSONResponse
 from pydantic import BaseModel, ValidationError
 from typing import Dict, Optional
 import os
-from pathlib import Path
 from dotenv import load_dotenv
 import logging
 import traceback
 
-from app.db.db import init_db
 from app.models.status import Status
 
 # Load environment variables from .env file
-env_path = Path(__file__).parent.parent / ".env"
-load_dotenv(dotenv_path=env_path)
+load_dotenv()
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -23,6 +20,8 @@ logger = logging.getLogger(__name__)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    from app.db.db import init_db
+
     await init_db()
     yield
     logger.info("Shuting down..")
