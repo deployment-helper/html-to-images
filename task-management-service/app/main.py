@@ -1,16 +1,74 @@
-from fastapi import FastAPI, Depends, HTTPException, Header
-from pydantic import BaseModel
+from fastapi import FastAPI, Depends, HTTPException, Header, Request, status
+from fastapi.responses import JSONResponse
+from pydantic import BaseModel, ValidationError
 from typing import Dict, Optional
 from enum import Enum
 import os
 from pathlib import Path
 from dotenv import load_dotenv
+import logging
+import traceback
 
 # Load environment variables from .env file
 env_path = Path(__file__).parent.parent / ".env"
 load_dotenv(dotenv_path=env_path)
 
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
 app = FastAPI()
+
+
+# Global exception handlers
+@app.exception_handler(HTTPException)
+async def http_exception_handler(request: Request, exc: HTTPException):
+    """Handle HTTP exceptions with consistent response format"""
+    logger.error(f"HTTP Exception: {exc.status_code} - {exc.detail}")
+    logger.error(f"Traceback: {traceback.format_exc()}")
+    return JSONResponse(
+        status_code=exc.status_code,
+        content={
+            "error": True,
+            "status_code": exc.status_code,
+            "message": exc.detail,
+            "path": str(request.url.path),
+        },
+    )
+
+
+@app.exception_handler(ValidationError)
+async def validation_exception_handler(request: Request, exc: ValidationError):
+    """Handle Pydantic validation errors"""
+    logger.error(f"Validation Error: {exc}")
+    logger.error(f"Traceback: {traceback.format_exc()}")
+    return JSONResponse(
+        status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+        content={
+            "error": True,
+            "status_code": status.HTTP_422_UNPROCESSABLE_ENTITY,
+            "message": "Request validation failed",
+            "details": exc.errors(),
+            "path": str(request.url.path),
+        },
+    )
+
+
+@app.exception_handler(Exception)
+async def general_exception_handler(request: Request, exc: Exception):
+    """Handle all other exceptions"""
+    logger.exception(f"Unhandled Exception: {exc}")
+    logger.error(f"Traceback: {traceback.format_exc()}")
+    return JSONResponse(
+        status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        content={
+            "error": True,
+            "status_code": status.HTTP_500_INTERNAL_SERVER_ERROR,
+            "message": "Internal server error",
+            "path": str(request.url.path),
+        },
+    )
+
 
 # Get API key from environment variable
 API_KEY = os.getenv("API_KEY")
@@ -74,16 +132,31 @@ def health():
     return "ok"
 
 
-@app.post("api/tasks", dependencies=[Depends(verify_api_key)])
+@app.post("/api/tasks", dependencies=[Depends(verify_api_key)])
 def post_task(task_req: TaskReq) -> TaskResp:
-    return f"POST task req {task_req}"
+    return TaskResp(
+        task_id="task_001",
+        input={"heading": task_req.heading},
+        output=None,
+        status=Status.TODO,
+    )
 
 
-@app.get("api/tasks/{task_id}", dependencies=[Depends(verify_api_key)])
+@app.get("/api/tasks/{task_id}", dependencies=[Depends(verify_api_key)])
 def get_task(task_id: str) -> TaskResp:
-    return f"Task id {task_id}"
+    return TaskResp(
+        task_id=task_id,
+        input={},
+        output=None,
+        status=Status.TODO,
+    )
 
 
-@app.put("api/tasks/{task_id}", dependencies=[Depends(verify_api_key)])
+@app.put("/api/tasks/{task_id}", dependencies=[Depends(verify_api_key)])
 def put_task(task_id: str, task_req: TaskUpdateReq) -> TaskResp:
-    return f"Task id {task_id}, task update req {task_req}"
+    return TaskResp(
+        task_id=task_id,
+        input={},
+        output=task_req.update,
+        status=Status.DONE,
+    )
