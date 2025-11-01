@@ -4,6 +4,10 @@ from sqlmodel import SQLModel
 from typing import AsyncGenerator
 from os import getenv
 
+from dotenv import load_dotenv
+
+load_dotenv()
+
 # Database URL (replace with your PostgreSQL credentials)
 DATABASE_URL = getenv("DATABASE_URL")
 

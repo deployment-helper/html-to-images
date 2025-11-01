@@ -3,12 +3,14 @@ from fastapi import FastAPI, Depends, HTTPException, Header, Request, status
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, ValidationError
 from typing import Dict, Optional
+from sqlalchemy.ext.asyncio import AsyncSession
 import os
 from dotenv import load_dotenv
 import logging
 import traceback
-
-from app.models.status import Status
+from sqlmodel import select
+from app.db.db import get_session
+from app.models.task import Task
 
 # Load environment variables from .env file
 load_dotenv()
@@ -96,7 +98,7 @@ def verify_api_key(authorization: Optional[str] = Header(None)) -> str:
     parts = authorization.split()
     if len(parts) != 2 or parts[0].lower() != "bearer":
         raise HTTPException(
-            status_code=401,
+            status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid Authorization header format. Expected 'Bearer <token>'",
         )
 
@@ -104,7 +106,8 @@ def verify_api_key(authorization: Optional[str] = Header(None)) -> str:
 
     if not API_KEY:
         raise HTTPException(
-            status_code=500, detail="API_KEY environment variable not configured"
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="API_KEY environment variable not configured",
         )
 
     if token != API_KEY:
@@ -120,13 +123,6 @@ class TaskReq(BaseModel):
     heading: str
 
 
-class TaskResp(BaseModel):
-    task_id: str
-    input: Dict
-    output: Dict | None = None
-    status: Status
-
-
 class TaskUpdateReq(BaseModel):
     task_id: str
     update: Dict
@@ -138,30 +134,43 @@ def health():
 
 
 @app.post("/api/tasks", dependencies=[Depends(verify_api_key)])
-def post_task(task_req: TaskReq) -> TaskResp:
-    return TaskResp(
-        task_id="task_001",
-        input={"heading": task_req.heading},
-        output=None,
-        status=Status.TODO,
-    )
+async def post_task(
+    task_req: TaskReq, session: AsyncSession = Depends(get_session)
+) -> Task:
+    task = Task(input={"heading": task_req.heading})
+    session.add(task)
+    await session.commit()
+    return task
 
 
 @app.get("/api/tasks/{task_id}", dependencies=[Depends(verify_api_key)])
-def get_task(task_id: str) -> TaskResp:
-    return TaskResp(
-        task_id=task_id,
-        input={},
-        output=None,
-        status=Status.TODO,
-    )
+async def get_task(task_id: str, session: AsyncSession = Depends(get_session)) -> Task:
+    statement = select(Task).where(Task.id == task_id)
+    result = await session.execute(statement)
+    row = result.first()
+
+    if not row:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Task not found"
+        )
+    return row.Task
 
 
 @app.put("/api/tasks/{task_id}", dependencies=[Depends(verify_api_key)])
-def put_task(task_id: str, task_req: TaskUpdateReq) -> TaskResp:
-    return TaskResp(
-        task_id=task_id,
-        input={},
-        output=task_req.update,
-        status=Status.DONE,
-    )
+async def put_task(
+    task_id: str, task_req: TaskUpdateReq, session: AsyncSession = Depends(get_session)
+) -> Task:
+    statement = select(Task).where(Task.id == task_id)
+    result = await session.execute(statement)
+    row = result.first()
+
+    if not row:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Task not found"
+        )
+
+    task = row.Task
+    task.output = (task.output or {}) | task_req.update
+    session.add(task)
+    await session.commit()
+    return task
