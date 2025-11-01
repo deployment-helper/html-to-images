@@ -32,3 +32,11 @@ output "project_name" {
   description = "Project name"
   value       = var.project_name
 }
+
+output "gcp_pubsub_topic1" {
+  value = google_pubsub_topic.topic1.id
+}
+
+output "gcp_pubsub_subscription1" {
+  value = google_pubsub_subscription.topic1_subscription.id
+}
