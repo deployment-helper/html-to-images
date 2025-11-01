@@ -1,13 +1,16 @@
+from contextlib import asynccontextmanager
 from fastapi import FastAPI, Depends, HTTPException, Header, Request, status
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, ValidationError
 from typing import Dict, Optional
-from enum import Enum
 import os
 from pathlib import Path
 from dotenv import load_dotenv
 import logging
 import traceback
+
+from app.db.db import init_db
+from app.models.status import Status
 
 # Load environment variables from .env file
 env_path = Path(__file__).parent.parent / ".env"
@@ -17,7 +20,15 @@ load_dotenv(dotenv_path=env_path)
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-app = FastAPI()
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    await init_db()
+    yield
+    logger.info("Shuting down..")
+
+
+app = FastAPI(title="Async Task Manager", lifespan=lifespan)
 
 
 # Global exception handlers
@@ -104,11 +115,6 @@ def verify_api_key(authorization: Optional[str] = Header(None)) -> str:
 
 
 # Models
-class Status(str, Enum):
-    TODO = "TODO"
-    IN_PROGRESS = "IN-PROGRESS"
-    DONE = "DONE"
-    ERROR = "ERROR"
 
 
 class TaskReq(BaseModel):

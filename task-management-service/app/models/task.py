@@ -1,0 +1,13 @@
+from datetime import datetime
+from typing import Dict, Optional
+from sqlmodel import SQLModel, Field, JSON
+
+from app.models.status import Status
+
+
+class Task(SQLModel, table=True):
+    id: str = Field(primary_key=True)
+    status: Status = Field(default=Status.TODO)
+    input: Dict = Field(default={}, sa_type=JSON)
+    output: Optional[Dict] = Field(default=None, sa_type=JSON)
+    created_at: datetime = Field(default_factory=datetime.now)
