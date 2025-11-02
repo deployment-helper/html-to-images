@@ -15,7 +15,7 @@ const HelloWorld: FC = (): JSX.Element => (
         </h2>
         <div tw="mt-8 flex md:mt-0">
           <div tw="flex rounded-md shadow">
-            <a tw="flex items-center justify-center rounded-md border border-transparent bg-indigo-600 px-5 py-3 text-base font-medium text-white">
+            <a tw="flex items-center justify-center rounded-md border border-transparent bg-red-600 px-5 py-3 text-base font-medium text-white">
               Get started
             </a>
           </div>
