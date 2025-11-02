@@ -1,12 +1,16 @@
 {
   "name": "image-generation-pipeline",
   "scripts": {
-    "dev": "bun run --hot src/index.ts"
+    "dev": "bun run --hot index.ts"
   },
+  "type": "module",
   "dependencies": {
     "@google-cloud/pubsub": "^5.2.0",
     "@google-cloud/storage": "^7.17.2",
+    "dotenv": "^17.2.3",
     "fastq": "^1.19.1",
+    "pino": "^10.1.0",
+    "react": "^19.2.0",
     "satori": "^0.18.3",
     "sharp": "^0.34.4"
   },
