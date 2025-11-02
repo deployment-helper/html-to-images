@@ -4,8 +4,8 @@ import { getRobotoFonts } from "../fonts";
 const { robotoItalicBuffer, robotoRegularBuffer } = getRobotoFonts();
 
 const options = {
-  width: 600,
-  height: 400,
+  width: 1200,
+  height: 800,
   fonts: [
     {
       name: "Roboto",
