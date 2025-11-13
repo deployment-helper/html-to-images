@@ -1,4 +1,5 @@
 import { Storage, Bucket } from "@google-cloud/storage";
+import pino from "pino";
 
 /**
  * GCS Service - Singleton class for managing Google Cloud Storage operations
@@ -9,11 +10,13 @@ class GCSService {
   private storage: Storage;
   private bucketName: string;
   private bucket: Bucket;
+  private logger: pino.Logger;
 
   /**
    * Private constructor to enforce singleton pattern
    */
   private constructor() {
+    this.logger = pino({ name: "GCSService" });
     this.storage = new Storage();
     this.bucketName = process.env.GCS_BUCKET_NAME || "";
     
@@ -60,22 +63,22 @@ class GCSService {
     try {
       const file = this.bucket.file(fileName);
       
-      // Calculate expiration date
-      const expirationDate = new Date();
-      expirationDate.setDate(expirationDate.getDate() + expirationDays);
+      // Set customTime to current time for lifecycle rule
+      // The daysSinceCustomTime condition counts days since this timestamp
+      const customTime = new Date().toISOString();
 
       await file.save(content, {
         contentType,
         metadata: {
-          customTime: expirationDate.toISOString(),
+          customTime: customTime,
         },
       });
 
-      console.log(`File ${fileName} uploaded successfully to ${this.bucketName}`);
+      this.logger.info({ fileName, bucketName: this.bucketName, expirationDays }, "File uploaded successfully");
       
       return `gs://${this.bucketName}/${fileName}`;
     } catch (error) {
-      console.error(`Error uploading file ${fileName}:`, error);
+      this.logger.error({ fileName, error }, "Error uploading file");
       throw new Error(`Failed to upload object: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
@@ -99,11 +102,11 @@ class GCSService {
       }
 
       const [content] = await file.download();
-      console.log(`File ${fileName} downloaded successfully from ${this.bucketName}`);
+      this.logger.info({ fileName, bucketName: this.bucketName }, "File downloaded successfully");
       
       return content;
     } catch (error) {
-      console.error(`Error downloading file ${fileName}:`, error);
+      this.logger.error({ fileName, error }, "Error downloading file");
       throw new Error(`Failed to get object: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
@@ -122,9 +125,9 @@ class GCSService {
       const file = this.bucket.file(fileName);
       await file.delete();
       
-      console.log(`File ${fileName} deleted successfully from ${this.bucketName}`);
+      this.logger.info({ fileName, bucketName: this.bucketName }, "File deleted successfully");
     } catch (error) {
-      console.error(`Error deleting file ${fileName}:`, error);
+      this.logger.error({ fileName, error }, "Error deleting file");
       throw new Error(`Failed to delete object: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
@@ -159,11 +162,11 @@ class GCSService {
       };
 
       const [url] = await file.getSignedUrl(options);
-      console.log(`Signed URL created for ${fileName}, expires in ${expirationMinutes} minutes`);
+      this.logger.info({ fileName, expirationMinutes, action }, "Signed URL created");
       
       return url;
     } catch (error) {
-      console.error(`Error creating signed URL for ${fileName}:`, error);
+      this.logger.error({ fileName, error }, "Error creating signed URL");
       throw new Error(`Failed to create signed URL: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
@@ -189,7 +192,7 @@ class GCSService {
       );
       
       if (hasCustomTimeRule) {
-        console.log("Lifecycle rule with daysSinceCustomTime already exists, skipping");
+        this.logger.info("Lifecycle rule with daysSinceCustomTime already exists, skipping");
         return;
       }
 
@@ -201,9 +204,9 @@ class GCSService {
       };
 
       await this.bucket.addLifecycleRule(lifecycleRule);
-      console.log(`Lifecycle rule added: objects will be deleted ${daysBeforeDeletion} days after custom time`);
+      this.logger.info({ daysBeforeDeletion }, "Lifecycle rule added: objects will be deleted after custom time");
     } catch (error) {
-      console.error("Error setting up auto-deletion lifecycle rule:", error);
+      this.logger.error({ error }, "Error setting up auto-deletion lifecycle rule");
       throw new Error(`Failed to setup auto-delete: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
@@ -223,7 +226,7 @@ class GCSService {
       const [exists] = await file.exists();
       return exists;
     } catch (error) {
-      console.error(`Error checking if file ${fileName} exists:`, error);
+      this.logger.error({ fileName, error }, "Error checking if file exists");
       return false;
     }
   }

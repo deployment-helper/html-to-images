@@ -206,10 +206,24 @@ await gcs.createSignedUrl('file.txt', -5); // Error: expirationMinutes must be a
 await gcs.uploadObject('file.txt', 'content', 'text/plain', -1); // Error: expirationDays must be a positive number
 ```
 
+### Logging
+
+The service uses **Pino** for structured logging with the following benefits:
+- JSON-formatted logs for easy parsing
+- Automatic timestamp inclusion
+- Contextual information (fileName, bucketName, etc.)
+- Production-ready log levels (info, error)
+
+Example log output:
+```json
+{"level":30,"time":1699999999999,"name":"GCSService","fileName":"image.png","bucketName":"my-bucket","msg":"File uploaded successfully"}
+```
+
 ### Notes
 
 - The service uses the singleton pattern to ensure only one instance exists
-- All uploaded files are tagged with a `customTime` metadata for lifecycle management
+- All uploaded files are tagged with `customTime` metadata set to the current time for lifecycle management
+- The `daysSinceCustomTime` lifecycle condition counts days from the `customTime` timestamp
 - Signed URLs are generated using v4 signing
 - The `setupAutoDelete()` method checks for existing lifecycle rules to prevent duplicates
 - The service requires proper GCP authentication (service account or application default credentials)
