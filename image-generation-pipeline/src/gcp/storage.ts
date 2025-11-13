@@ -1,4 +1,4 @@
-import { Storage, Bucket, File } from "@google-cloud/storage";
+import { Storage, Bucket } from "@google-cloud/storage";
 
 /**
  * GCS Service - Singleton class for managing Google Cloud Storage operations
@@ -49,6 +49,14 @@ class GCSService {
     contentType: string = "application/octet-stream",
     expirationDays: number = 7
   ): Promise<string> {
+    if (!fileName || fileName.trim() === "") {
+      throw new Error("fileName cannot be empty");
+    }
+    
+    if (expirationDays < 0) {
+      throw new Error("expirationDays must be a positive number");
+    }
+    
     try {
       const file = this.bucket.file(fileName);
       
@@ -78,6 +86,10 @@ class GCSService {
    * @returns {Promise<Buffer>} The file content as Buffer
    */
   public async getObject(fileName: string): Promise<Buffer> {
+    if (!fileName || fileName.trim() === "") {
+      throw new Error("fileName cannot be empty");
+    }
+    
     try {
       const file = this.bucket.file(fileName);
       const [exists] = await file.exists();
@@ -102,6 +114,10 @@ class GCSService {
    * @returns {Promise<void>}
    */
   public async deleteObject(fileName: string): Promise<void> {
+    if (!fileName || fileName.trim() === "") {
+      throw new Error("fileName cannot be empty");
+    }
+    
     try {
       const file = this.bucket.file(fileName);
       await file.delete();
@@ -125,6 +141,14 @@ class GCSService {
     expirationMinutes: number = 60,
     action: "read" | "write" | "delete" | "resumable" = "read"
   ): Promise<string> {
+    if (!fileName || fileName.trim() === "") {
+      throw new Error("fileName cannot be empty");
+    }
+    
+    if (expirationMinutes <= 0) {
+      throw new Error("expirationMinutes must be a positive number");
+    }
+    
     try {
       const file = this.bucket.file(fileName);
       
@@ -150,7 +174,25 @@ class GCSService {
    * @returns {Promise<void>}
    */
   public async setupAutoDelete(daysBeforeDeletion: number = 7): Promise<void> {
+    if (daysBeforeDeletion <= 0) {
+      throw new Error("daysBeforeDeletion must be a positive number");
+    }
+    
     try {
+      // Get existing lifecycle configuration
+      const [metadata] = await this.bucket.getMetadata();
+      const existingRules = metadata.lifecycle?.rule || [];
+      
+      // Check if a similar rule already exists
+      const hasCustomTimeRule = existingRules.some(
+        (rule: any) => rule.condition?.daysSinceCustomTime !== undefined
+      );
+      
+      if (hasCustomTimeRule) {
+        console.log("Lifecycle rule with daysSinceCustomTime already exists, skipping");
+        return;
+      }
+
       const lifecycleRule = {
         action: { type: "Delete" },
         condition: {
@@ -172,6 +214,10 @@ class GCSService {
    * @returns {Promise<boolean>} True if the file exists, false otherwise
    */
   public async objectExists(fileName: string): Promise<boolean> {
+    if (!fileName || fileName.trim() === "") {
+      throw new Error("fileName cannot be empty");
+    }
+    
     try {
       const file = this.bucket.file(fileName);
       const [exists] = await file.exists();

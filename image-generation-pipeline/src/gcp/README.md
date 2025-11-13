@@ -188,9 +188,28 @@ try {
 }
 ```
 
+### Input Validation
+
+The service validates all inputs and throws descriptive errors for invalid parameters:
+
+- **fileName**: Must not be empty or whitespace-only
+- **expirationMinutes**: Must be a positive number
+- **expirationDays**: Must be non-negative
+- **daysBeforeDeletion**: Must be a positive number
+
+Examples of validation errors:
+
+```typescript
+// These will throw errors
+await gcs.uploadObject('', 'content', 'text/plain'); // Error: fileName cannot be empty
+await gcs.createSignedUrl('file.txt', -5); // Error: expirationMinutes must be a positive number
+await gcs.uploadObject('file.txt', 'content', 'text/plain', -1); // Error: expirationDays must be a positive number
+```
+
 ### Notes
 
 - The service uses the singleton pattern to ensure only one instance exists
 - All uploaded files are tagged with a `customTime` metadata for lifecycle management
 - Signed URLs are generated using v4 signing
+- The `setupAutoDelete()` method checks for existing lifecycle rules to prevent duplicates
 - The service requires proper GCP authentication (service account or application default credentials)
